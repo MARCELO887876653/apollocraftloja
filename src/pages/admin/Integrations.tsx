@@ -78,8 +78,11 @@ export default function AdminIntegrations() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Public Key</Label>
+              <Label>Public Key (opcional)</Label>
               <Input value={mp.publicKey} onChange={(e) => setMp({ ...mp, publicKey: e.target.value })} placeholder="APP_USR-..." />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Só é usada para checkout com cartão no navegador. Para PIX, deixe em branco.
+              </p>
             </div>
             <div>
               <Label>Webhook Secret (opcional, assinatura)</Label>
