@@ -34,7 +34,7 @@ function emptyForm() {
     name: "", shortDescription: "", description: "", image: "", images: [] as string[],
     categoryId: "", tags: [] as string[], price: "0", compareAt: "", stock: "0",
     unlimitedStock: false, active: true, featured: false, popular: false, hidden: false,
-    minQty: "1", maxQty: "10", order: "0", benefits: [] as string[],
+    minQty: "1", maxQty: "99", order: "0", benefits: [] as string[],
     delivery: EMPTY_DELIVERY as any, seoTitle: "", seoDescription: "",
   };
 }

@@ -47,7 +47,17 @@ function load(): Stored {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { items: [], coupon: null };
     const parsed = JSON.parse(raw) as Stored;
-    return { items: Array.isArray(parsed.items) ? parsed.items : [], coupon: parsed.coupon ?? null };
+    const items = Array.isArray(parsed.items) ? parsed.items : [];
+    return {
+      items: items.map((i) => ({
+        ...i,
+        quantity: Math.max(
+          1,
+          Math.min(Number(i.quantity) || 1, i.maxQty && i.maxQty > 0 ? i.maxQty : 99),
+        ),
+      })),
+      coupon: parsed.coupon ?? null,
+    };
   } catch {
     return { items: [], coupon: null };
   }
@@ -71,11 +81,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       );
       if (idx >= 0) {
         const items = [...s.items];
-        const max = items[idx].maxQty ?? 99;
-        items[idx] = { ...items[idx], quantity: Math.min(items[idx].quantity + item.quantity, max) };
+        const max = items[idx].maxQty && items[idx].maxQty > 0 ? items[idx].maxQty : 99;
+        items[idx] = {
+          ...items[idx],
+          quantity: Math.max(1, Math.min(items[idx].quantity + Math.max(1, item.quantity), max)),
+        };
         return { ...s, items };
       }
-      return { ...s, items: [...s.items, item] };
+      const maxNew = item.maxQty && item.maxQty > 0 ? item.maxQty : 99;
+      return {
+        ...s,
+        items: [...s.items, { ...item, quantity: Math.min(Math.max(1, item.quantity), maxNew) }],
+      };
     });
   }, []);
 

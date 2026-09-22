@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "convex/react";
+import { motion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router";
 import { api } from "@/convex/_generated/api";
 import { StoreLayout } from "@/components/store/StoreLayout";
@@ -39,6 +40,13 @@ export default function ProductPage() {
   const [variantId, setVariantId] = useState<string>("");
   const [qty, setQty] = useState(1);
   const [mainImage, setMainImage] = useState<string | null>(null);
+
+  // troca de produto: reset de estado (evita "1 virar 10" ao navegar entre produtos)
+  useEffect(() => {
+    setVariantId("");
+    setQty(1);
+    setMainImage(null);
+  }, [slug]);
 
   const product = data?.product;
   const variants = data?.variants ?? [];
@@ -136,32 +144,56 @@ export default function ProductPage() {
         </nav>
 
         <div className="grid gap-10 lg:grid-cols-2">
-          <div>
-            <div className="overflow-hidden rounded-xl border bg-muted">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            <div className="overflow-hidden rounded-2xl border bg-muted">
               {mainImage || product.image ? (
-                <img src={mainImage ?? product.image} alt={product.name} className="aspect-video w-full object-cover" />
+                <motion.img
+                  key={mainImage ?? product.image}
+                  initial={{ opacity: 0, scale: 1.04 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  src={mainImage ?? product.image}
+                  alt={product.name}
+                  loading="eager"
+                  decoding="async"
+                  className="aspect-square w-full object-cover"
+                />
               ) : (
-                <div className="flex aspect-video items-center justify-center text-muted-foreground">
+                <div className="flex aspect-square items-center justify-center text-muted-foreground">
                   <ShoppingBag className="size-14" />
                 </div>
               )}
             </div>
             {product.images?.length > 0 && (
               <div className="mt-3 grid grid-cols-5 gap-2">
-                {[product.image, ...product.images].filter(Boolean).slice(0, 5).map((img: string, i: number) => (
-                  <button
-                    key={i}
-                    className="overflow-hidden rounded-lg border transition hover:border-primary"
-                    onClick={() => setMainImage(img)}
-                  >
-                    <img src={img} alt="" className="aspect-square w-full object-cover" />
-                  </button>
-                ))}
+                {[product.image, ...product.images].filter(Boolean).slice(0, 5).map((img: string, i: number) => {
+                  const selected = (mainImage ?? product.image) === img;
+                  return (
+                    <motion.button
+                      key={i}
+                      whileTap={{ scale: 0.95 }}
+                      className={`overflow-hidden rounded-lg border transition ${
+                        selected ? "border-primary ring-2 ring-primary/40" : "opacity-70 hover:opacity-100"
+                      }`}
+                      onClick={() => setMainImage(img)}
+                    >
+                      <img src={img} alt="" loading="lazy" decoding="async" className="aspect-square w-full object-cover" />
+                    </motion.button>
+                  );
+                })}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+          >
             <div className="flex flex-wrap items-center gap-2">
               {data.category && (
                 <Badge variant="secondary">{data.category.name}</Badge>
@@ -243,26 +275,30 @@ export default function ProductPage() {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button
-                size="lg"
-                disabled={outOfStock}
-                onClick={() => {
-                  addToCart();
-                  navigate("/checkout");
-                }}
-                className="h-12 flex-1 rounded-xl bg-white text-sm font-bold text-zinc-950 shadow-lg shadow-white/5 hover:bg-zinc-200"
-              >
-                <ShoppingCart className="mr-2 size-4" /> Comprar agora
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="h-12 flex-1 rounded-xl border-border bg-card/60 font-semibold backdrop-blur"
-                disabled={outOfStock}
-                onClick={addToCart}
-              >
-                <Zap className="mr-2 size-4" /> Adicionar ao carrinho
-              </Button>
+              <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
+                <Button
+                  size="lg"
+                  disabled={outOfStock}
+                  onClick={() => {
+                    addToCart();
+                    navigate("/checkout");
+                  }}
+                  className="h-12 w-full rounded-xl bg-white text-sm font-bold text-zinc-950 shadow-lg shadow-white/5 hover:bg-zinc-200"
+                >
+                  <ShoppingCart className="mr-2 size-4" /> Comprar agora
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 w-full rounded-xl border-border bg-card/60 font-semibold backdrop-blur"
+                  disabled={outOfStock}
+                  onClick={addToCart}
+                >
+                  <Zap className="mr-2 size-4" /> Adicionar ao carrinho
+                </Button>
+              </motion.div>
             </div>
 
             {benefits.length > 0 && (
@@ -279,7 +315,7 @@ export default function ProductPage() {
               <span className="flex items-center gap-1.5"><Zap className="size-3.5 text-primary" /> Entrega automática</span>
               <span className="flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-emerald-600" /> Pagamento seguro</span>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {product.description && (

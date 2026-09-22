@@ -72,7 +72,7 @@ export default function CheckoutPage() {
         <div className="mx-auto w-full max-w-3xl px-4 py-24 text-center">
           <ShoppingBag className="mx-auto size-12 text-muted-foreground" />
           <h1 className="mt-4 text-2xl font-bold">Carrinho vazio</h1>
-          <Button className="mt-6" onClick={() => navigate("/loja")}>Ver catálogo</Button>
+          <Button className="mt-6 rounded-xl bg-white font-bold text-zinc-950 hover:bg-zinc-200" onClick={() => navigate("/loja")}>Ver catálogo</Button>
         </div>
       </StoreLayout>
     );
@@ -145,7 +145,7 @@ export default function CheckoutPage() {
               {cart.coupon && (
                 <div className="flex justify-between text-emerald-600">
                   <span>Cupom {cart.coupon}</span>
-                  <span>aplicado</span>
+                  <span>desconto na confirmação</span>
                 </div>
               )}
               <Separator className="my-2" />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAction, useQuery } from "convex/react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { api } from "@/convex/_generated/api";
@@ -133,7 +134,12 @@ export default function OrderStatusPage() {
 
         {/* PIX */}
         {order.paymentStatus === "pending" && (
-          <div className="mt-8 rounded-xl border bg-card p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="mt-8 rounded-xl border bg-card p-6"
+          >
             <div className="flex items-center gap-2">
               <QrCode className="size-5 text-primary" />
               <h2 className="font-semibold">Pague com PIX</h2>
@@ -141,13 +147,18 @@ export default function OrderStatusPage() {
             </div>
 
             {order.pixQrCodeBase64 && (
-              <div className="mt-4 flex justify-center">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="mt-4 flex justify-center"
+              >
                 <img
                   src={`data:image/png;base64,${order.pixQrCodeBase64}`}
                   alt="QR Code PIX"
-                  className="size-56 rounded-lg border bg-white p-2"
+                  className="size-64 rounded-xl border bg-white p-3 shadow-lg sm:size-72"
                 />
-              </div>
+              </motion.div>
             )}
 
             {order.pixQrCode && (
@@ -189,12 +200,17 @@ export default function OrderStatusPage() {
             <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
               <Loader2 className="size-3 animate-spin" /> Aguardando confirmação do pagamento…
             </p>
-          </div>
+          </motion.div>
         )}
 
         {/* Entrega */}
         {order.paymentStatus === "paid" && (
-          <div className="mt-8 rounded-xl border bg-card p-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="mt-8 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-center"
+          >
             {order.deliveryStatus === "delivered" ? (
               <>
                 <CheckCheck className="mx-auto size-8 text-emerald-600" />
@@ -212,7 +228,7 @@ export default function OrderStatusPage() {
                 </p>
               </>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Resumo */}

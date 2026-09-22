@@ -30,10 +30,11 @@ const NAV = [
 function AdminShell() {
   const me = useQuery(api.team.me) as
     | { user: any; admin: { name: string; email: string; role: string; permissions: string[] } | null }
+    | null
     | undefined;
   const navigate = useNavigate();
 
-  if (me === undefined) {
+  if (me === undefined || me === null) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -41,7 +42,7 @@ function AdminShell() {
     );
   }
 
-  if (me.admin === null) {
+  if (!me.admin) {
     return <NoAccess email={me.user?.email} />;
   }
 

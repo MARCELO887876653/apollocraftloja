@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router";
 import { api } from "@/convex/_generated/api";
 import { StoreLayout } from "@/components/store/StoreLayout";
@@ -67,7 +68,10 @@ export default function CartPage() {
           <ShoppingBag className="mx-auto size-12 text-muted-foreground" />
           <h1 className="mt-4 text-2xl font-bold">Seu carrinho está vazio</h1>
           <p className="mt-2 text-muted-foreground">Explore o catálogo e adicione produtos.</p>
-          <Button className="mt-6" onClick={() => navigate("/loja")}>
+          <Button
+            className="mt-6 rounded-xl bg-white font-bold text-zinc-950 hover:bg-zinc-200"
+            onClick={() => navigate("/loja")}
+          >
             Ver catálogo <ArrowRight className="ml-2 size-4" />
           </Button>
         </div>
@@ -82,14 +86,20 @@ export default function CartPage() {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">
+            <AnimatePresence initial={false}>
             {cart.items.map((item) => (
-              <div
+              <motion.div
                 key={`${item.productId}-${item.variantId ?? "base"}`}
+                layout
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.25 }}
                 className="flex gap-4 rounded-xl border bg-card p-4"
               >
                 <div className="size-20 shrink-0 overflow-hidden rounded-lg bg-muted">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                    <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                       <ShoppingBag className="size-6" />
@@ -106,15 +116,17 @@ export default function CartPage() {
                         <p className="text-sm text-muted-foreground">{item.variantName}</p>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-red-600"
-                      onClick={() => cart.remove(item.productId, item.variantId)}
-                      aria-label="Remover"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <motion.div whileTap={{ scale: 0.9 }}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-red-600"
+                        onClick={() => cart.remove(item.productId, item.variantId)}
+                        aria-label="Remover"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </motion.div>
                   </div>
                   <div className="mt-auto flex items-center justify-between">
                     <div className="flex items-center rounded-lg border">
@@ -138,7 +150,11 @@ export default function CartPage() {
                         size="icon"
                         className="size-8"
                         onClick={() =>
-                          cart.setQuantity(item.productId, item.variantId, item.quantity + 1)
+                          cart.setQuantity(
+                            item.productId,
+                            item.variantId,
+                            Math.min(item.maxQty && item.maxQty > 0 ? item.maxQty : 99, item.quantity + 1),
+                          )
                         }
                       >
                         +
@@ -147,8 +163,9 @@ export default function CartPage() {
                     <span className="font-semibold">{formatBRL(item.unitPriceCents * item.quantity)}</span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
           </div>
 
           <div className="h-fit rounded-xl border bg-card p-6 lg:sticky lg:top-24">
