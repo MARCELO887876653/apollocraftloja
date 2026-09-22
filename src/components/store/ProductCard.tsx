@@ -3,8 +3,7 @@ import { formatBRL } from "@/lib/format";
 import { useQuery } from "convex/react";
 import { Link } from "react-router";
 import { api } from "@/convex/_generated/api";
-import { ShoppingBag, ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ShoppingBag, ShoppingCart, Zap, TrendingDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 type Product = {
@@ -19,7 +18,7 @@ type Product = {
   unlimitedStock: boolean;
   minQty: number;
   maxQty: number;
-  categoryName?: string;
+  categoryId?: string;
 };
 
 export function ProductCard({ product }: { product: Product }) {
@@ -31,10 +30,10 @@ export function ProductCard({ product }: { product: Product }) {
       : 0;
 
   const categories = useQuery(api.categories.listPublic) as any[] | undefined;
-  const category = categories?.find((c) => c._id === (product as any).categoryId);
+  const category = categories?.find((c) => c._id === product.categoryId);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-foreground/25 hover:shadow-xl">
       <Link to={`/produto/${product.slug}`} className="relative block aspect-video overflow-hidden bg-muted">
         {product.image ? (
           <img
@@ -47,44 +46,45 @@ export function ProductCard({ product }: { product: Product }) {
             <ShoppingBag className="size-10 opacity-40" />
           </div>
         )}
-        {discount > 0 && (
-          <Badge className="absolute left-2 top-2 bg-red-600 hover:bg-red-600">-{discount}%</Badge>
-        )}
         {outOfStock && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm font-semibold">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm font-bold">
             Esgotado
           </div>
         )}
       </Link>
-      <div className="flex flex-1 flex-col gap-1.5 p-4">
+
+      <div className="flex flex-1 flex-col gap-1 p-4">
         {category && (
-          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             {category.name}
           </span>
         )}
         <Link
           to={`/produto/${product.slug}`}
-          className="line-clamp-2 font-semibold leading-snug hover:text-primary"
+          className="line-clamp-1 text-lg font-extrabold tracking-tight hover:underline"
         >
           {product.name}
         </Link>
-        {product.shortDescription && (
-          <p className="line-clamp-2 text-xs text-muted-foreground">{product.shortDescription}</p>
-        )}
-        <div className="mt-auto flex items-end justify-between pt-2">
-          <div>
-            {discount > 0 && (
-              <span className="block text-xs text-muted-foreground line-through">
+
+        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+          {discount > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground line-through">
                 {formatBRL(product.compareAtPriceCents!)}
               </span>
-            )}
-            <span className="text-lg font-bold text-primary">{formatBRL(product.priceCents)}</span>
-          </div>
-          <Button
-            size="icon"
-            variant="secondary"
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-500">
+                <TrendingDown className="size-3" /> -{discount}%
+              </span>
+            </>
+          )}
+        </div>
+
+        <p className="text-xl font-extrabold text-white">{formatBRL(product.priceCents)}</p>
+        <p className="text-xs text-muted-foreground">À vista no Pix</p>
+
+        <div className="mt-auto pt-3">
+          <button
             disabled={outOfStock}
-            aria-label="Adicionar ao carrinho"
             onClick={() =>
               cart.add({
                 productId: product._id,
@@ -96,9 +96,10 @@ export function ProductCard({ product }: { product: Product }) {
                 maxQty: product.maxQty,
               })
             }
+            className="inline-flex h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white text-sm font-bold text-zinc-950 transition-colors hover:bg-zinc-200 disabled:opacity-50"
           >
-            <ShoppingCart className="size-4" />
-          </Button>
+            <ShoppingCart className="size-4" /> Comprar agora
+          </button>
         </div>
       </div>
     </div>

@@ -15,8 +15,8 @@ export const applyBrandDefaults = internalMutation({
     const OLD_VALUES = {
       storeNames: ["NexaStore", "Loja"],
       oldSeoTitle: "NexaStore — Loja Digital",
-      oldPrimary: "#7c3aed",
-      oldBackground: "#ffffff",
+      oldPrimaries: ["#7c3aed", "#6366f1"], // roxo original e indigo anterior
+      oldBackgrounds: ["#ffffff", "#0b0d12"],
     };
 
     // store
@@ -30,14 +30,17 @@ export const applyBrandDefaults = internalMutation({
       });
     }
 
-    // theme (só se ainda for o tema antigo claro/roxo)
+    // theme (só se ainda for um tema padrão antigo, preservando o raio ajustado)
     const theme = (await getSetting(ctx, "theme")) as any;
     if (
       theme &&
-      theme.primary === OLD_VALUES.oldPrimary &&
-      theme.background === OLD_VALUES.oldBackground
+      OLD_VALUES.oldPrimaries.includes(theme.primary) &&
+      OLD_VALUES.oldBackgrounds.includes(theme.background)
     ) {
-      await setSetting(ctx, "theme", DEFAULT_THEME);
+      await setSetting(ctx, "theme", {
+        ...DEFAULT_THEME,
+        radius: typeof theme.radius === "number" ? theme.radius : DEFAULT_THEME.radius,
+      });
     }
 
     return { ok: true };

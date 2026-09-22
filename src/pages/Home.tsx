@@ -1,7 +1,9 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Link } from "react-router";
-import { ShoppingBag, Zap, ShieldCheck, Clock, ChevronDown } from "lucide-react";
+import {
+  ShoppingBag, Zap, ShieldCheck, Clock, List, ArrowRight, TrendingDown,
+} from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -12,14 +14,21 @@ import { ProductCard } from "@/components/store/ProductCard";
 
 type Section = { id: string; type: string; enabled: boolean; config?: any };
 type Product = any;
-type Category = { _id: string; name: string; slug: string; icon?: string; color?: string; description?: string };
+type Category = { _id: string; name: string; slug: string; icon?: string; color?: string; image?: string; description?: string };
 
-function SectionHeader({ title, subtitle }: { title?: string; subtitle?: string }) {
+function SectionHeader({ title, moreHref }: { title?: string; moreHref?: string }) {
   if (!title) return null;
   return (
-    <div className="mb-6">
-      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
-      {subtitle && <p className="mt-1 text-muted-foreground">{subtitle}</p>}
+    <div className="mb-6 flex items-end justify-between gap-4">
+      <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h2>
+      {moreHref && (
+        <Link
+          to={moreHref}
+          className="flex shrink-0 items-center gap-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Ver tudo <ArrowRight className="size-4" />
+        </Link>
+      )}
     </div>
   );
 }
@@ -27,7 +36,7 @@ function SectionHeader({ title, subtitle }: { title?: string; subtitle?: string 
 function Grid({ products }: { products: Product[] | undefined }) {
   if (!products?.length) return null;
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {products.map((p) => (
         <ProductCard key={p._id} product={p} />
       ))}
@@ -41,55 +50,51 @@ function Hero() {
   const hero = banners?.[0];
   return (
     <section className="relative overflow-hidden border-b">
-      {/* fundo decorativo */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,transparent_0%,var(--background)_75%)]" />
-      </div>
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-6 px-4 py-24 text-center sm:py-32">
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary shadow-[0_0_20px_-5px] shadow-primary/50">
-          <Zap className="size-3.5" /> Entrega automática via PIX — 24 horas por dia
-        </span>
-        <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
+      {/* imagem de fundo configurável + overlay */}
+      {hero?.imageDesktop && (
+        <div className="absolute inset-0" aria-hidden>
+          <img src={hero.imageDesktop} alt="" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40" />
+        </div>
+      )}
+      {!hero?.imageDesktop && (
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div className="absolute -top-48 left-1/3 h-[420px] w-[720px] rounded-full bg-primary/20 blur-[130px]" />
+        </div>
+      )}
+
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-start gap-5 px-4 py-20 sm:py-28">
+        <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
           {hero?.title ?? (
             <>
-              Potencialize sua jornada no{" "}
+              Domine o jogo com os{" "}
               <span className="bg-gradient-to-r from-primary via-indigo-400 to-sky-400 bg-clip-text text-transparent">
-                servidor
-              </span>
+                kits e VIPs
+              </span>{" "}
+              da nossa loja!
             </>
           )}
         </h1>
-        <p className="max-w-2xl text-lg text-muted-foreground">
-          {hero?.subtitle ?? store?.description ?? "VIPs, cash e upgrades com pagamento instantâneo e entrega automática."}
+        <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
+          {hero?.subtitle ?? store?.description ?? "Entrega automática 24/7, preços justos e pagamento instantâneo via PIX."}
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <div className="flex flex-wrap items-center gap-3 pt-1">
           <Link
             to="/loja"
-            className="inline-flex h-12 items-center rounded-xl bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-[1.03] hover:shadow-primary/40 active:scale-95"
+            className="inline-flex h-12 items-center gap-2 whitespace-nowrap rounded-xl bg-white px-7 text-sm font-bold text-zinc-950 shadow-lg shadow-white/5 transition-all hover:bg-zinc-200 active:scale-95"
           >
-            Ver catálogo
+            <ShoppingBag className="size-4.5" /> Conferir ofertas
           </Link>
-          {(hero?.buttonText && hero?.buttonUrl) || store?.discord ? (
+          {store?.discord && (
             <a
-              href={hero?.buttonUrl ?? store?.discord}
-              className="inline-flex h-12 items-center rounded-xl border border-border bg-card px-8 text-sm font-semibold shadow-sm transition-all hover:bg-accent hover:shadow-md active:scale-95"
+              href={store.discord}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-12 items-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card/60 px-7 text-sm font-semibold backdrop-blur transition-all hover:bg-accent active:scale-95"
             >
-              {hero?.buttonText ?? "Entrar no Discord"}
+              Entrar no Discord
             </a>
-          ) : null}
-        </div>
-        <div className="mt-6 grid grid-cols-3 gap-6 text-center sm:gap-12">
-          {[
-            { value: "24/7", label: "Entrega automática" },
-            { value: "PIX", label: "Aprovação instantânea" },
-            { value: "100%", label: "Seguro" },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <p className="text-2xl font-extrabold text-foreground sm:text-3xl">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
-            </div>
-          ))}
+          )}
         </div>
       </div>
     </section>
@@ -98,22 +103,22 @@ function Hero() {
 
 function Benefits() {
   const items = [
-    { icon: Zap, title: "Entrega instantânea", text: "Receba seu produto automaticamente após o pagamento." },
-    { icon: ShieldCheck, title: "Pagamento seguro", text: "Processado pelo Mercado Pago com PIX." },
-    { icon: Clock, title: "Suporte 24/7", text: "Atendimento via Discord sempre disponível." },
-    { icon: ShoppingBag, title: "Estoque real", text: "Sistema de estoque e variantes por produto." },
+    { icon: Zap, title: "Entrega automática", text: "Receba na hora, assim que o PIX cair." },
+    { icon: ShieldCheck, title: "Pagamento seguro", text: "Processado pelo Mercado Pago." },
+    { icon: Clock, title: "Suporte 24/7", text: "Atendimento no Discord sempre aberto." },
+    { icon: ShoppingBag, title: "Estoque real", text: "Kits e VIPs sempre disponíveis." },
   ];
   return (
     <section className="border-b">
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid w-full max-w-7xl gap-4 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((item) => (
-          <div key={item.title} className="flex items-start gap-3 rounded-xl border bg-card p-4">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div key={item.title} className="flex items-start gap-3 rounded-2xl border bg-card p-4">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
               <item.icon className="size-5" />
             </span>
             <div>
-              <p className="font-semibold">{item.title}</p>
-              <p className="text-sm text-muted-foreground">{item.text}</p>
+              <p className="text-sm font-bold">{item.title}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">{item.text}</p>
             </div>
           </div>
         ))}
@@ -122,27 +127,47 @@ function Benefits() {
   );
 }
 
+/** Cards horizontais de categoria com glow — estilo vitrine. */
 function Categories() {
   const categories = useQuery(api.categories.listPublic) as Category[] | undefined;
   if (!categories?.length) return null;
   return (
     <section className="border-b">
       <div className="mx-auto w-full max-w-7xl px-4 py-12">
-        <SectionHeader title="Categorias" subtitle="Explore por categoria" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {categories.slice(0, 12).map((c) => (
+        <span className="mb-5 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-1.5 text-sm font-semibold text-muted-foreground">
+          <List className="size-4" /> Categorias populares
+        </span>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.slice(0, 6).map((c) => (
             <Link
               key={c._id}
               to={`/loja?categoria=${c.slug}`}
-              className="flex flex-col items-center gap-2 rounded-xl border bg-card p-5 text-center transition hover:border-primary/40 hover:shadow-sm"
+              className="group flex items-center gap-4 rounded-2xl border bg-card p-3 transition-all hover:border-foreground/25"
             >
-              <span
-                className="flex size-11 items-center justify-center rounded-full text-lg"
-                style={{ backgroundColor: c.color ? `${c.color}22` : undefined, color: c.color }}
+              <div
+                className="relative size-24 shrink-0 overflow-hidden rounded-xl"
+                style={c.color ? { boxShadow: `0 0 42px -8px ${c.color}` } : undefined}
               >
-                {c.icon ?? "📦"}
-              </span>
-              <span className="text-sm font-medium">{c.name}</span>
+                {c.image ? (
+                  <img src={c.image} alt={c.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div
+                    className="flex h-full w-full items-center justify-center text-3xl"
+                    style={{ backgroundColor: c.color ? `${c.color}22` : undefined }}
+                  >
+                    {c.icon ?? "📦"}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1 py-1">
+                <p className="truncate text-lg font-extrabold uppercase tracking-tight">{c.name}</p>
+                <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+                  {c.description ?? `Veja os itens disponíveis de ${c.name}.`}
+                </p>
+                <span className="mt-2.5 inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-xl bg-white px-5 text-sm font-bold text-zinc-950 transition-colors group-hover:bg-zinc-200">
+                  Ver produtos <ArrowRight className="size-4" />
+                </span>
+              </div>
             </Link>
           ))}
         </div>
@@ -164,14 +189,7 @@ function ProductSection({
   return (
     <section className="border-b">
       <div className="mx-auto w-full max-w-7xl px-4 py-12">
-        <div className="mb-6 flex items-end justify-between">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
-          {moreHref && (
-            <Link to={moreHref} className="text-sm font-medium text-primary hover:underline">
-              Ver tudo
-            </Link>
-          )}
-        </div>
+        <SectionHeader title={title} moreHref={moreHref} />
         <Grid products={products} />
       </div>
     </section>

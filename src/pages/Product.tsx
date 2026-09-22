@@ -174,12 +174,13 @@ export default function ProductPage() {
               <p className="mt-2 text-muted-foreground">{product.shortDescription}</p>
             )}
 
-            <div className="mt-5 flex items-end gap-3">
-              <span className="text-4xl font-extrabold text-primary">{formatBRL(price)}</span>
+            <div className="mt-5 flex flex-wrap items-end gap-3">
+              <span className="text-4xl font-extrabold text-white">{formatBRL(price)}</span>
               {discount > 0 && (
                 <span className="pb-1 text-lg text-muted-foreground line-through">{formatBRL(compareAt!)}</span>
               )}
             </div>
+            <p className="text-xs text-muted-foreground">À vista no Pix</p>
 
             <p className="mt-2 text-sm">
               {stock === Infinity ? (
@@ -244,23 +245,23 @@ export default function ProductPage() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Button
                 size="lg"
-                className="flex-1"
                 disabled={outOfStock}
                 onClick={() => {
                   addToCart();
                   navigate("/checkout");
                 }}
+                className="h-12 flex-1 rounded-xl bg-white text-sm font-bold text-zinc-950 shadow-lg shadow-white/5 hover:bg-zinc-200"
               >
-                <Zap className="mr-2 size-4" /> Comprar agora
+                <ShoppingCart className="mr-2 size-4" /> Comprar agora
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="flex-1"
+                className="h-12 flex-1 rounded-xl border-border bg-card/60 font-semibold backdrop-blur"
                 disabled={outOfStock}
                 onClick={addToCart}
               >
-                <ShoppingCart className="mr-2 size-4" /> Adicionar ao carrinho
+                <Zap className="mr-2 size-4" /> Adicionar ao carrinho
               </Button>
             </div>
 

@@ -81,17 +81,17 @@ export const DEFAULT_STORE = {
   },
 };
 
-/** Tema dark permanente da ApolloCraft. */
+/** Tema dark permanente da ApolloCraft (estilo vitrine escura, CTA branco). */
 export const DEFAULT_THEME = {
-  primary: "#6366f1",
-  primaryForeground: "#ffffff",
+  primary: "#818cf8",
+  primaryForeground: "#0b0d12",
   secondary: "#181c26",
   secondaryForeground: "#e6e8ee",
-  background: "#0b0d12",
-  foreground: "#e6e8ee",
-  card: "#12151c",
-  border: "#232833",
-  radius: 12,
+  background: "#0a0c10",
+  foreground: "#f0f2f6",
+  card: "#101318",
+  border: "#1f242e",
+  radius: 14,
   font: "Inter",
   darkMode: true,
 };
