@@ -117,4 +117,35 @@ export const remove = mutation({
   },
 });
 
+/** Bootstrap: o primeiro usuário autenticado torna-se owner se nenhum admin existir. */
+export const claimOwnership = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      return { claimed: false as const, reason: "unauthenticated" as const };
+    }
+    const user = await ctx.db.get(userId);
+    if (!user?.email) {
+      return { claimed: false as const, reason: "no-email" as const };
+    }
+    const anyAdmin = await ctx.db.query("adminUsers").first();
+    if (anyAdmin) {
+      return { claimed: false as const, reason: "already-exists" as const };
+    }
+    const id = await ctx.db.insert("adminUsers", {
+      email: user.email,
+      name: user.name ?? user.email.split("@")[0],
+      userId,
+      role: "owner",
+      permissions: ALL_PERMISSIONS,
+      active: true,
+      createdAt: Date.now(),
+      lastLoginAt: Date.now(),
+    });
+    await logAudit(ctx, null, "team.claim_owner", "adminUser", id, { email: user.email });
+    return { claimed: true as const };
+  },
+});
+
 export { MEMBER_FIELDS, hasPermission };
