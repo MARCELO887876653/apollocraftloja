@@ -48,8 +48,8 @@ export async function setSetting(
 // ─── Defaults (usados como fallback caso a config não exista) ───
 
 export const DEFAULT_STORE = {
-  name: "NexaStore",
-  description: "A loja digital definitiva para produtos e servidores de jogos.",
+  name: "ApolloCraft",
+  description: "A loja definitiva para VIPs, cash e upgrades do seu servidor — entrega automática 24/7.",
   logoUrl: "",
   faviconUrl: "",
   currency: "BRL",
@@ -74,25 +74,26 @@ export const DEFAULT_STORE = {
     { key: "uuid", label: "UUID do Minecraft", enabled: false, required: false },
   ],
   seo: {
-    title: "NexaStore — Loja Digital",
-    description: "Compre produtos digitais com entrega automática.",
+    title: "ApolloCraft — Loja Oficial",
+    description: "Compre VIPs, cash e upgrades com entrega automática e pagamento seguro via PIX.",
     ogImage: "",
     canonical: "",
   },
 };
 
+/** Tema dark permanente da ApolloCraft. */
 export const DEFAULT_THEME = {
-  primary: "#7c3aed",
+  primary: "#6366f1",
   primaryForeground: "#ffffff",
-  secondary: "#f4f4f5",
-  secondaryForeground: "#18181b",
-  background: "#ffffff",
-  foreground: "#09090b",
-  card: "#ffffff",
-  border: "#e4e4e7",
-  radius: 10,
+  secondary: "#181c26",
+  secondaryForeground: "#e6e8ee",
+  background: "#0b0d12",
+  foreground: "#e6e8ee",
+  card: "#12151c",
+  border: "#232833",
+  radius: 12,
   font: "Inter",
-  darkMode: false,
+  darkMode: true,
 };
 
 export const DEFAULT_HOMEPAGE = [
@@ -102,6 +103,7 @@ export const DEFAULT_HOMEPAGE = [
   { id: "featured", type: "featured", enabled: true, config: { title: "Produtos em destaque", count: 8 } },
   { id: "promo", type: "promo", enabled: true, config: { title: "Promoções", count: 4 } },
   { id: "popular", type: "popular", enabled: true, config: { title: "Mais vendidos", count: 8 } },
+  { id: "new", type: "new", enabled: true, config: { title: "Lançamentos", count: 4 } },
   { id: "faq", type: "faq", enabled: true, config: { title: "Perguntas frequentes", count: 6 } },
 ];
 
@@ -117,15 +119,14 @@ export async function ensureDefaults(ctx: MutationCtx) {
         { label: "Início", url: "/", newTab: false },
         { label: "Catálogo", url: "/loja", newTab: false },
       ],
-    ],
-    [
-      "footer",
-      {
-        about: "Sua loja digital com entrega automática e pagamento seguro via PIX.",
-        columns: [{ title: "Institucional", links: [{ label: "Termos de uso", url: "/p/termos" }, { label: "Privacidade", url: "/p/privacidade" }] }],
-        copyright: "",
-      },
-    ],
+    ],      [
+        "footer",
+        {
+          about: "ApolloCraft — sua loja de confiança com entrega automática e pagamento seguro via PIX.",
+          columns: [{ title: "Institucional", links: [{ label: "Termos de uso", url: "/p/termos" }, { label: "Privacidade", url: "/p/privacidade" }] }],
+          copyright: "",
+        },
+      ],
   ];
   for (const [key, value] of defaults) {
     const existing = await getSetting(ctx, key);

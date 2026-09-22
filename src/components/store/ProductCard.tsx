@@ -34,17 +34,17 @@ export function ProductCard({ product }: { product: Product }) {
   const category = categories?.find((c) => c._id === (product as any).categoryId);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10">
       <Link to={`/produto/${product.slug}`} className="relative block aspect-video overflow-hidden bg-muted">
         {product.image ? (
           <img
             src={product.image}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <ShoppingBag className="size-10" />
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-card text-muted-foreground">
+            <ShoppingBag className="size-10 opacity-40" />
           </div>
         )}
         {discount > 0 && (

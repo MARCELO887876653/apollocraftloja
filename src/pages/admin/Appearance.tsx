@@ -94,9 +94,9 @@ function ThemeTab() {
             <Label>Fonte</Label>
             <Input value={form.font} onChange={(e) => set("font", e.target.value)} />
           </div>
-          <label className="flex items-center justify-between text-sm">
-            Modo escuro <Switch checked={form.darkMode} onCheckedChange={(v) => set("darkMode", v)} />
-          </label>
+          <p className="text-xs text-muted-foreground">
+            A ApolloCraft usa tema escuro permanente — personalize as cores acima à vontade.
+          </p>
         </CardContent>
       </Card>
 

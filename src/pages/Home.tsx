@@ -27,7 +27,7 @@ function SectionHeader({ title, subtitle }: { title?: string; subtitle?: string 
 function Grid({ products }: { products: Product[] | undefined }) {
   if (!products?.length) return null;
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {products.map((p) => (
         <ProductCard key={p._id} product={p} />
       ))}
@@ -40,32 +40,56 @@ function Hero() {
   const banners = useQuery(api.content.listBanners, { position: "hero", activeOnly: true }) as any[] | undefined;
   const hero = banners?.[0];
   return (
-    <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/10 via-primary/5 to-background">
-      <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-6 px-4 py-20 text-center sm:py-28">
-        <span className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-          <Zap className="size-3.5 text-primary" /> Entrega automática via PIX
+    <section className="relative overflow-hidden border-b">
+      {/* fundo decorativo */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,transparent_0%,var(--background)_75%)]" />
+      </div>
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-6 px-4 py-24 text-center sm:py-32">
+        <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary shadow-[0_0_20px_-5px] shadow-primary/50">
+          <Zap className="size-3.5" /> Entrega automática via PIX — 24 horas por dia
         </span>
-        <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight sm:text-6xl">
-          {hero?.title ?? store?.name ?? "Sua loja digital completa"}
+        <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
+          {hero?.title ?? (
+            <>
+              Potencialize sua jornada no{" "}
+              <span className="bg-gradient-to-r from-primary via-indigo-400 to-sky-400 bg-clip-text text-transparent">
+                servidor
+              </span>
+            </>
+          )}
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground">
-          {hero?.subtitle ?? store?.description ?? "Produtos digitais com pagamento instantâneo e entrega automática 24 horas por dia."}
+          {hero?.subtitle ?? store?.description ?? "VIPs, cash e upgrades com pagamento instantâneo e entrega automática."}
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <Link
             to="/loja"
-            className="inline-flex h-11 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground shadow transition hover:opacity-90"
+            className="inline-flex h-12 items-center rounded-xl bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-[1.03] hover:shadow-primary/40 active:scale-95"
           >
             Ver catálogo
           </Link>
-          {hero?.buttonText && hero?.buttonUrl && (
+          {(hero?.buttonText && hero?.buttonUrl) || store?.discord ? (
             <a
-              href={hero.buttonUrl}
-              className="inline-flex h-11 items-center rounded-lg border bg-card px-6 text-sm font-semibold shadow-sm transition hover:bg-accent"
+              href={hero?.buttonUrl ?? store?.discord}
+              className="inline-flex h-12 items-center rounded-xl border border-border bg-card px-8 text-sm font-semibold shadow-sm transition-all hover:bg-accent hover:shadow-md active:scale-95"
             >
-              {hero.buttonText}
+              {hero?.buttonText ?? "Entrar no Discord"}
             </a>
-          )}
+          ) : null}
+        </div>
+        <div className="mt-6 grid grid-cols-3 gap-6 text-center sm:gap-12">
+          {[
+            { value: "24/7", label: "Entrega automática" },
+            { value: "PIX", label: "Aprovação instantânea" },
+            { value: "100%", label: "Seguro" },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <p className="text-2xl font-extrabold text-foreground sm:text-3xl">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

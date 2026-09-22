@@ -1,7 +1,48 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { requireAdmin, logAudit } from "./lib/admin";
-import { getSetting, setSetting, ensureDefaults, DEFAULT_STORE, DEFAULT_THEME, DEFAULT_HOMEPAGE } from "./lib/data";
+import { getSetting, setSetting, DEFAULT_STORE, DEFAULT_THEME, DEFAULT_HOMEPAGE } from "./lib/data";
+
+/**
+ * Migration idempotente: garante ApolloCraft + tema dark. Só preenche o que
+ * ainda usa o valor padrão antigo (NexaStore / tema claro), sem sobrescrever
+ * personalizações reais do admin.
+ */
+export const applyBrandDefaults = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const OLD_VALUES = {
+      storeNames: ["NexaStore", "Loja"],
+      oldSeoTitle: "NexaStore — Loja Digital",
+      oldPrimary: "#7c3aed",
+      oldBackground: "#ffffff",
+    };
+
+    // store
+    const store = (await getSetting(ctx, "store")) as any;
+    if (store && OLD_VALUES.storeNames.includes(store.name)) {
+      await setSetting(ctx, "store", {
+        ...store,
+        name: DEFAULT_STORE.name,
+        description: DEFAULT_STORE.description,
+        seo: { ...DEFAULT_STORE.seo },
+      });
+    }
+
+    // theme (só se ainda for o tema antigo claro/roxo)
+    const theme = (await getSetting(ctx, "theme")) as any;
+    if (
+      theme &&
+      theme.primary === OLD_VALUES.oldPrimary &&
+      theme.background === OLD_VALUES.oldBackground
+    ) {
+      await setSetting(ctx, "theme", DEFAULT_THEME);
+    }
+
+    return { ok: true };
+  },
+});
 
 // ─── Públicas (loja) ───
 
@@ -212,5 +253,13 @@ export const resetTheme = mutation({
     await setSetting(ctx, "theme", DEFAULT_THEME);
     await setSetting(ctx, "homepage", DEFAULT_HOMEPAGE);
     await logAudit(ctx, admin, "settings.reset", "settings", "theme");
+  },
+});
+
+/** Aplica a identidade ApolloCraft + tema dark (executa a migration acima). */
+export const applyBrand = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.runMutation(internal.settings.applyBrandDefaults, {});
   },
 });
