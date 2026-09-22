@@ -49,7 +49,7 @@ export const myOrders = query({
     if (!user?.email) return null;
     const orders = await ctx.db
       .query("orders")
-      .withIndex("by_email", (q) => q.eq("customerEmail", user.email))
+      .withIndex("by_email", (q) => q.eq("customerEmail", user.email!))
       .collect();
     orders.sort((a, b) => b.createdAt - a.createdAt);
     return orders;

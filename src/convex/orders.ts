@@ -111,9 +111,9 @@ export const create = mutation({
     // desconto de estoque transacional
     for (const r of reserved) {
       if (r.wasUnlimited) continue;
-      const doc = await ctx.db.get(r.id);
+      const doc: any = await ctx.db.get(r.id);
       if (!doc || doc.unlimitedStock) continue;
-      if (doc.stock < r.qty) throw new Error(`Estoque insuficiente de "${(doc as any).name}"`);
+      if (doc.stock < r.qty) throw new Error(`Estoque insuficiente de "${doc.name}"`);
       await ctx.db.patch(r.id, { stock: doc.stock - r.qty });
     }
 
@@ -145,7 +145,7 @@ export const create = mutation({
         if (coupon.excludedProductIds?.includes(item.productId)) continue;
         if (coupon.productIds?.length && !coupon.productIds.includes(item.productId)) continue;
         if (coupon.categoryIds?.length) {
-          const product = await ctx.db.get(item.productId);
+          const product: any = await ctx.db.get(item.productId);
           if (!product?.categoryId || !coupon.categoryIds.includes(product.categoryId)) continue;
         }
         eligible += item.totalCents;
@@ -235,14 +235,14 @@ export const create = mutation({
 
     // vendas + criação da fila de entrega
     for (const item of orderItems) {
-      const product = await ctx.db.get(item.productId);
+      const product: any = await ctx.db.get(item.productId);
       if (!product) continue;
       await ctx.db.patch(product._id, { salesCount: product.salesCount + item.quantity });
       if (product.delivery.type !== "none") {
         await ctx.db.insert("deliveries", {
           orderId,
           orderNumber: number,
-          productId: product._id,
+          productId: product._id as any,
           productName: product.name,
           type: product.delivery.type,
           target: customer.minecraftNick ?? customer.discord ?? customer.email!,

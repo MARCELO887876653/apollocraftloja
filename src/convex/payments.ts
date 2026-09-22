@@ -1,10 +1,8 @@
 "use node";
 
-import { action, internalMutation, internalQuery } from "./_generated/server";
+import { action } from "./_generated/server";
 import { v } from "convex/values";
-import { api, internal } from "./_generated/api";
 import crypto from "node:crypto";
-import { getSetting } from "./lib/data";
 
 // ─────────────────────────────────────────────────────────────
 // Gateway de pagamento — Mercado Pago (PIX)
@@ -20,8 +18,18 @@ interface GatewayConfig {
   webhookSecret?: string;
 }
 
+/** As referências internas são resolvidas em runtime para evitar dependência
+ *  circular de tipos entre este módulo (Node) e paymentsData (runtime padrão). */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function dataApi(): any {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require("./_generated/api").api.paymentsData;
+}
+
 async function getGatewayConfig(ctx: any): Promise<GatewayConfig> {
-  const config = (await getSetting(ctx, "gateway_mercadopago")) as GatewayConfig | null;
+  const config = (await ctx.runQuery(dataApi().internalGetGatewayConfig, {})) as
+    | GatewayConfig
+    | null;
   return config ?? {};
 }
 
@@ -29,27 +37,12 @@ function resolveToken(config: GatewayConfig): string | null {
   return config.accessToken || process.env.MERCADO_PAGO_ACCESS_TOKEN || null;
 }
 
-// ─── Acesso interno a dados ───
-
-export const internalGetOrder = internalQuery({
-  args: { id: v.id("orders") },
-  handler: async (ctx, { id }) => await ctx.db.get(id),
-});
-
-export const internalGetStoreName = internalQuery({
-  args: {},
-  handler: async (ctx) => {
-    const store = (await getSetting(ctx, "store")) as any;
-    return store?.name ?? "Loja";
-  },
-});
-
 // ─── Criar pagamento PIX ───
 
 export const createPixPayment = action({
   args: { orderId: v.id("orders") },
-  handler: async (ctx, { orderId }) => {
-    const order: any = await ctx.runQuery(internal.payments.internalGetOrder, { orderId });
+  handler: async (ctx: any, { orderId }: { orderId: any }) => {
+    const order: any = await ctx.runQuery(dataApi().internalGetOrder, { orderId });
     if (!order) throw new Error("Pedido não encontrado");
     if (order.paymentStatus === "paid") {
       return { alreadyPaid: true as const };
@@ -63,7 +56,7 @@ export const createPixPayment = action({
       );
     }
 
-    const storeName = await ctx.runQuery(internal.payments.internalGetStoreName, {});
+    const storeName: string = await ctx.runQuery(dataApi().internalGetStoreName, {});
     const idempotencyKey = `order-${order._id}-${order.createdAt}`;
 
     const res = await fetch(`${MP_API}/v1/payments`, {
@@ -92,7 +85,7 @@ export const createPixPayment = action({
     }
 
     const pix = data?.point_of_interaction?.transaction_data ?? {};
-    await ctx.runMutation(internal.payments.applyPaymentCreation, {
+    await ctx.runMutation(dataApi().applyPaymentCreation, {
       orderId,
       gatewayPaymentId: String(data.id),
       pixQrCode: pix.qr_code ?? undefined,
@@ -109,35 +102,12 @@ export const createPixPayment = action({
   },
 });
 
-export const applyPaymentCreation = internalMutation({
-  args: {
-    orderId: v.id("orders"),
-    gatewayPaymentId: v.string(),
-    pixQrCode: v.optional(v.string()),
-    pixQrCodeBase64: v.optional(v.string()),
-    pixTicketUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, { orderId, gatewayPaymentId, pixQrCode, pixQrCodeBase64, pixTicketUrl }) => {
-    const order = await ctx.db.get(orderId);
-    if (!order || order.paymentStatus !== "pending") return;
-    await ctx.db.patch(orderId, {
-      gateway: "mercadopago",
-      gatewayPaymentId,
-      pixQrCode,
-      pixQrCodeBase64,
-      pixTicketUrl,
-      paymentMethod: "pix",
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-// ─── Consultar status no gateway (polling do cliente chama via mutation wrapper) ───
+// ─── Consultar status no gateway (polling do cliente) ───
 
 export const refreshPaymentStatus = action({
   args: { orderId: v.id("orders") },
-  handler: async (ctx, { orderId }) => {
-    const order: any = await ctx.runQuery(internal.payments.internalGetOrder, { orderId });
+  handler: async (ctx: any, { orderId }: { orderId: any }) => {
+    const order: any = await ctx.runQuery(dataApi().internalGetOrder, { orderId });
     if (!order?.gatewayPaymentId || order.paymentStatus !== "pending") {
       return { status: order?.paymentStatus ?? "unknown" };
     }
@@ -157,10 +127,13 @@ async function syncGatewayPayment(ctx: any, gatewayPaymentId: string, orderId?: 
   const data = await res.json();
   const mpStatus = mapMpStatus(data.status);
   if (orderId) {
-    await ctx.runMutation(internal.payments.applyGatewayStatus, {
+    await ctx.runMutation(dataApi().applyGatewayStatus, {
       gatewayPaymentId,
       mpStatus,
-      amountApproved: typeof data.transaction_amount === "number" ? Math.round(data.transaction_amount * 100) : undefined,
+      amountApproved:
+        typeof data.transaction_amount === "number"
+          ? Math.round(data.transaction_amount * 100)
+          : undefined,
     });
   }
   return { status: mpStatus };
@@ -177,23 +150,6 @@ function mapMpStatus(status: string | undefined): string {
   }
 }
 
-/** Transição de estado idempotente — chamada pelo polling e pelo webhook. */
-export const applyGatewayStatus = internalMutation({
-  args: {
-    gatewayPaymentId: v.string(),
-    mpStatus: v.string(),
-    amountApproved: v.optional(v.number()),
-  },
-  handler: async (ctx, { gatewayPaymentId, mpStatus }) => {
-    const order = await ctx.db
-      .query("orders")
-      .withIndex("by_gatewayPaymentId", (q) => q.eq("gatewayPaymentId", gatewayPaymentId))
-      .first();
-    if (!order) return;
-    await transitionOrder(ctx, order, mpStatus);
-  },
-});
-
 // ─── Webhook do Mercado Pago (via http.ts) ───
 
 export const handleWebhook = action({
@@ -202,7 +158,8 @@ export const handleWebhook = action({
     signatureHeader: v.optional(v.string()),
     requestId: v.optional(v.string()),
   },
-  handler: async (ctx, { body, signatureHeader, requestId }) => {
+  handler: async (ctx: any, args: any) => {
+    const { body, signatureHeader, requestId } = args;
     let payload: any;
     try {
       payload = JSON.parse(body);
@@ -218,7 +175,7 @@ export const handleWebhook = action({
     const config = await getGatewayConfig(ctx);
     if (config.webhookSecret && signatureHeader) {
       const parts = Object.fromEntries(
-        signatureHeader.split(",").map((p) => p.trim().split("=")),
+        signatureHeader.split(",").map((p: string) => p.trim().split("=")),
       );
       const manifest = `id:${dataId};request-id:${requestId ?? ""};ts:${parts.ts};`;
       const hmac = crypto
@@ -238,53 +195,10 @@ export const handleWebhook = action({
     });
     if (!res.ok) return { ok: true as const, code: 200 }; // 200 evita loop de retry do MP
     const data = await res.json();
-    await ctx.runMutation(internal.payments.applyGatewayStatus, {
+    await ctx.runMutation(dataApi().applyGatewayStatus, {
       gatewayPaymentId: String(data.id),
       mpStatus: mapMpStatus(data.status),
     });
     return { ok: true as const, code: 200 };
   },
 });
-
-// ─── Transição central de status (idempotente, nunca rebaixa "paid") ───
-
-export const transitionOrder = async (ctx: any, order: any, mpStatus: string) => {
-  const current = order.paymentStatus;
-  if (current === mpStatus) return;
-  const now = Date.now();
-
-  if (mpStatus === "paid" && current === "pending") {
-    await ctx.db.patch(order._id, {
-      paymentStatus: "paid",
-      paidAt: now,
-      updatedAt: now,
-      statusHistory: [...order.statusHistory, { status: "paid", at: now, note: "Pagamento confirmado pelo gateway" }],
-    });
-    // dispara processamento da fila de entrega
-    await ctx.scheduler.runAfter(0, internal.deliveries.processOrder, { orderId: order._id });
-    // dispara webhooks de saída
-    await ctx.scheduler.runAfter(0, internal.webhooksOut.sendEvent, {
-      event: "order.paid",
-      payload: {
-        orderNumber: order.number,
-        total: order.totalCents / 100,
-        customerEmail: order.customerEmail,
-        customerName: order.customerName,
-        items: order.items.map((i: any) => ({ name: i.name, variant: i.variantName, quantity: i.quantity })),
-      },
-    });
-    return;
-  }
-
-  const allowed: Record<string, string[]> = {
-    pending: ["cancelled", "expired", "failed"],
-    paid: ["refunded"],
-  };
-  if (allowed[current]?.includes(mpStatus)) {
-    await ctx.db.patch(order._id, {
-      paymentStatus: mpStatus,
-      updatedAt: now,
-      statusHistory: [...order.statusHistory, { status: mpStatus, at: now, note: "Status atualizado pelo gateway" }],
-    });
-  }
-};

@@ -8,7 +8,6 @@ import { getSetting, setSetting, ensureDefaults, DEFAULT_STORE, DEFAULT_THEME, D
 export const getStore = query({
   args: {},
   handler: async (ctx) => {
-    await ensureDefaultsIfMissing(ctx);
     const store = (await getSetting(ctx, "store")) as any;
     return store ?? DEFAULT_STORE;
   },
@@ -17,7 +16,6 @@ export const getStore = query({
 export const getTheme = query({
   args: {},
   handler: async (ctx) => {
-    await ensureDefaultsIfMissing(ctx);
     return (await getSetting(ctx, "theme")) ?? DEFAULT_THEME;
   },
 });
@@ -25,7 +23,6 @@ export const getTheme = query({
 export const getHomepage = query({
   args: {},
   handler: async (ctx) => {
-    await ensureDefaultsIfMissing(ctx);
     return (await getSetting(ctx, "homepage")) ?? DEFAULT_HOMEPAGE;
   },
 });
@@ -33,7 +30,6 @@ export const getHomepage = query({
 export const getMenu = query({
   args: {},
   handler: async (ctx) => {
-    await ensureDefaultsIfMissing(ctx);
     return (await getSetting(ctx, "menu")) ?? [];
   },
 });
@@ -41,8 +37,6 @@ export const getMenu = query({
 export const getFooter = query({
   args: {},
   handler: async (ctx) => {
-    await ensureDefaultsIfMissing(ctx);
-    const store = (await getSetting(ctx, "store")) as any;
     return (await getSetting(ctx, "footer")) ?? { about: "", columns: [], copyright: "" };
   },
 });
@@ -55,34 +49,12 @@ export const isMaintenance = query({
   },
 });
 
-// settings queries não podem ser mutation; helper: cria defaults na primeira leitura via insert
-async function ensureDefaultsIfMissing(ctx: any) {
-  const has = await ctx.db.query("settings").withIndex("by_key", (q: any) => q.eq("key", "store")).first();
-  if (!has) {
-    // primeira leitura pública: cria defaults mínimos (store/theme/homepage)
-    const defaults: Array<[string, unknown]> = [
-      ["store", DEFAULT_STORE],
-      ["theme", DEFAULT_THEME],
-      ["homepage", DEFAULT_HOMEPAGE],
-      ["menu", [{ label: "Início", url: "/", newTab: false }]],
-      ["footer", { about: "", columns: [], copyright: "" }],
-    ];
-    for (const [key, value] of defaults) {
-      const exists = await ctx.db.query("settings").withIndex("by_key", (q: any) => q.eq("key", key)).first();
-      if (!exists) {
-        await ctx.db.insert("settings", { key, value, updatedAt: Date.now() });
-      }
-    }
-  }
-}
-
 // ─── Admin: obter tudo (para as telas de config) ───
 
 export const getStoreConfig = query({
   args: {},
   handler: async (ctx) => {
     await requireAdmin(ctx, "settings.manage");
-    await ensureDefaults(ctx);
     const store = (await getSetting(ctx, "store")) as any;
     return store ?? DEFAULT_STORE;
   },
@@ -92,7 +64,6 @@ export const getAppearance = query({
   args: {},
   handler: async (ctx) => {
     await requireAdmin(ctx, "appearance.manage");
-    await ensureDefaults(ctx);
     const theme = (await getSetting(ctx, "theme")) as any;
     const homepage = (await getSetting(ctx, "homepage")) as any[];
     const menu = (await getSetting(ctx, "menu")) as any[];

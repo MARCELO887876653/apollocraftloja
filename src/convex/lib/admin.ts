@@ -73,10 +73,6 @@ export async function getAdminUser(
       .query("adminUsers")
       .withIndex("by_email", (q) => q.eq("email", user.email!))
       .first();
-    if (admin && !admin.userId) {
-      await ctx.db.patch(admin._id, { userId });
-      admin = { ...admin, userId };
-    }
   }
   if (!admin || !admin.active) return null;
   return admin;

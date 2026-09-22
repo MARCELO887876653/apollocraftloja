@@ -183,4 +183,3 @@ export type Product = Doc<"products">;
 export type ProductVariant = Doc<"productVariants">;
 export type Category = Doc<"categories">;
 export type Order = Doc<"orders">;
-export type Id_ = Id<string>;
